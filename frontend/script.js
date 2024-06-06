@@ -46,7 +46,7 @@
     
             loadingElement.classList.remove('hidden');
     
-            fetch('YOUR_BACKEND_URL', {
+            fetch('https://jgzd6a88mc.execute-api.us-west-2.amazonaws.com/Prod/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
