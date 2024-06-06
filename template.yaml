@@ -1,0 +1,287 @@
+
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: MIT-0
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+#  software and associated documentation files (the "Software"), to deal in the Software
+#  without restriction, including without limitation the rights to use, copy, modify,
+#  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+#  permit persons to whom the Software is furnished to do so.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+#  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+#  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+#  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+#  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MvpStoriesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub
+        - ${ResourceName} From Stack ${AWS::StackName}
+        - ResourceName: MvpStoriesApi
+      StageName: Prod
+      DefinitionBody:
+        openapi: '3.0'
+        info: {}
+        paths:
+          /:
+            post:
+              responses:
+                '200':
+                  description: default OK response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: string
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: string
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: string
+              x-amazon-apigateway-integration:
+                credentials: !GetAtt MvpStoriesApiToMvpStoriesWorkflowRole.Arn
+                httpMethod: POST
+                type: aws
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:states:action/StartSyncExecution
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'*'"
+                      method.response.header.Access-Control-Allow-Headers: "'*'"
+                    responseTemplates:
+                      application/json: |
+                        #set($inputRoot = $input.path('$'))
+                        #set($output = $util.parseJson($inputRoot.output))
+                        {
+                          "mp3Url": "$output.mp3Url"
+                        }
+                requestTemplates:
+                  application/json: !Sub |-
+                    {
+                      "input": "$util.escapeJavaScript($input.json('$'))",
+                      "name": "$context.requestId",
+                      "stateMachineArn": "${MvpStoriesWorkflow}"
+                    }
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+      Cors:
+        AllowOrigin: '''*'''
+        AllowHeaders: '''*'''
+        AllowMethods: '''*'''
+        MaxAge: 5
+  MvpStoriesWorkflow:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Definition:
+        StartAt: Generate Story
+        States:
+          Generate Story:
+            Type: Task
+            Resource: arn:aws:states:::bedrock:invokeModel
+            Parameters:
+              ModelId: arn:aws:bedrock:us-west-2::foundation-model/ai21.j2-mid-v1
+              Body:
+                prompt.$: States.Format('Generate an approx 100-120 words long bedtime story about {}', $.context)
+                maxTokens: 300
+            OutputPath: $.Body.completions[0].data.text
+            Next: Translate ?
+          Translate ?:
+            Type: Choice
+            Choices:
+              - Not:
+                  Variable: $$.Execution.Input.language
+                  StringEquals: en
+                Comment: Needs translation
+                Next: Translate Story
+            Default: Convert Story to Speech
+          Translate Story:
+            Type: Task
+            Parameters:
+              SourceLanguageCode: en
+              TargetLanguageCode.$: $$.Execution.Input.language
+              Text.$: $
+            Resource: arn:aws:states:::aws-sdk:translate:translateText
+            Next: Convert Story to Speech
+            OutputPath: $.TranslatedText
+          Convert Story to Speech:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              FunctionName: ${MvpStoriesTextToSpeechArn}
+              Payload:
+                story.$: $
+                language.$: $$.Execution.Input.language
+            Retry:
+              - ErrorEquals:
+                  - Lambda.ServiceException
+                  - Lambda.AWSLambdaException
+                  - Lambda.SdkClientException
+                  - Lambda.TooManyRequestsException
+                IntervalSeconds: 1
+                MaxAttempts: 3
+                BackoffRate: 2
+            End: true
+      Logging:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt MvpStoriesWorkflowLogGroup.Arn
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogDelivery
+                - logs:GetLogDelivery
+                - logs:UpdateLogDelivery
+                - logs:DeleteLogDelivery
+                - logs:ListLogDeliveries
+                - logs:PutResourcePolicy
+                - logs:DescribeResourcePolicies
+                - logs:DescribeLogGroups
+              Resource: '*'
+        - Statement:
+            - Effect: Allow
+              Action:
+                - translate:*
+              Resource:
+                - '*'
+        - Statement:
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource: 'arn:aws:bedrock:*::foundation-model/ai21.j2-mid-v1'
+        - LambdaInvokePolicy:
+            FunctionName: !Ref MvpStoriesTextToSpeech
+      Tracing:
+        Enabled: true
+      Type: EXPRESS
+      DefinitionSubstitutions:
+        MvpStoriesTextToSpeechArn: !GetAtt MvpStoriesTextToSpeech.Arn
+      Events:
+        MvpStoriesApiPOST:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId: !Ref MvpStoriesApi
+  MvpStoriesWorkflowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub
+        - /aws/vendedlogs/states/${AWS::StackName}-${ResourceId}-Logs
+        - ResourceId: MvpStoriesWorkflow
+  MvpStoriesApiToMvpStoriesWorkflowRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: !Sub apigateway.${AWS::URLSuffix}
+      Policies:
+        - PolicyName: ExecuteStateMachine
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: states:StartSyncExecution
+                Resource: !GetAtt MvpStoriesWorkflow.Arn
+  MvpStoriesTextToSpeech:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: MvpStoriesTextToSpeech
+      CodeUri: src/handlers
+      Handler: textToSpeech.handler
+      Runtime: nodejs20.x
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - polly:*
+              Resource:
+                - '*'
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:GetObjectAcl
+                - s3:GetObjectLegalHold
+                - s3:GetObjectRetention
+                - s3:GetObjectTorrent
+                - s3:GetObjectVersion
+                - s3:GetObjectVersionAcl
+                - s3:GetObjectVersionForReplication
+                - s3:GetObjectVersionTorrent
+                - s3:ListBucket
+                - s3:ListBucketMultipartUploads
+                - s3:ListBucketVersions
+                - s3:ListMultipartUploadParts
+                - s3:AbortMultipartUpload
+                - s3:DeleteObject
+                - s3:DeleteObjectVersion
+                - s3:PutObject
+                - s3:PutObjectLegalHold
+                - s3:PutObjectRetention
+                - s3:RestoreObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${MvpStoriesBucket}
+                - !Sub arn:${AWS::Partition}:s3:::${MvpStoriesBucket}/*
+      Environment:
+        Variables:
+          MVPSTORIESBUCKET_BUCKET_NAME: !Ref MvpStoriesBucket
+          MVPSTORIESBUCKET_BUCKET_ARN: !GetAtt MvpStoriesBucket.Arn
+  MvpStoriesTextToSpeechLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${MvpStoriesTextToSpeech}
+  MvpStoriesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-mvpstorie-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: alias/aws/s3
+      PublicAccessBlockConfiguration:
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  MvpStoriesBucketBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MvpStoriesBucket
+      PolicyDocument:
+        Id: RequireEncryptionInTransit
+        Version: '2012-10-17'
+        Statement:
+          - Principal: '*'
+            Action: '*'
+            Effect: Deny
+            Resource:
+              - !GetAtt MvpStoriesBucket.Arn
+              - !Sub ${MvpStoriesBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+Outputs:
+  MvpStoriesApi:
+    Description: "Amazon API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${MvpStoriesApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
