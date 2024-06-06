@@ -1,0 +1,44 @@
+
+  <!--
+    Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+    SPDX-License-Identifier: MIT-0
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this
+    software and associated documentation files (the "Software"), to deal in the Software
+    without restriction, including without limitation the rights to use, copy, modify,
+    merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+    PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  -->
+
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Bedtime Story Generator</title>
+      <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+      <div class="container">
+          <h1>Generate me a story</h1>
+          <input type="text" id="context" placeholder="Context of the story">
+          <p>Language of the story?</p>
+          <div>
+              <input type="radio" name="language" value="en" checked> English
+              <input type="radio" name="language" value="fr"> French
+              <input type="radio" name="language" value="ar"> Arabic
+              <input type="radio" name="language" value="nl"> Dutch
+          </div>
+          <div id="loading" class="hidden">Loading...</div>
+          <audio id="audioPlayer" controls class="hidden"></audio>
+      </div>
+      <script src="script.js"></script>
+  </body>
+  </html>
