@@ -38,5 +38,7 @@ Deploy Frontend
 
 - Upload zip folder to  aws Amplify
 
+- Access to url enable by amplify for test the app in different languages
+
 # References
 - Repository build in base to WorkShop post summit: [Link](https://aws-experience.com/emea/iberia/e/e9354/post-aws-summit-madrid-workshops---serverless-track)
