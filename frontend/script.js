@@ -46,7 +46,7 @@
     
             loadingElement.classList.remove('hidden');
     
-            fetch('https://jgzd6a88mc.execute-api.us-west-2.amazonaws.com/Prod/', {
+            fetch('YOUR_API_GATEWAY_ENDPOINT', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
