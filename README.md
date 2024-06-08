@@ -1,5 +1,5 @@
 # aws-workshop-serverless-ia
-AWS workshop serverless IA
+AWS workshop serverless IA: MVP to test generative AI using serverless technologies.
 
 # Pre-requisites
 
