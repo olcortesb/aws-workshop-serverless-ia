@@ -1,5 +1,7 @@
 # aws-workshop-serverless-ia
-AWS workshop serverless IA: MVP to test generative AI using serverless technologies.
+AWS workshop serverless IA: Build your serverless GenAI powered MVP with AWS
+![image](docs/0.png)
+
 
 # Pre-requisites
 
@@ -39,6 +41,10 @@ Deploy Frontend
 - Upload zip folder to  aws Amplify
 
 - Access to url enable by amplify for test the app in different languages
+
+![image](docs/1.png)
+
+
 
 # References
 - Repository build in base to WorkShop post summit: [Link](https://aws-experience.com/emea/iberia/e/e9354/post-aws-summit-madrid-workshops---serverless-track)
