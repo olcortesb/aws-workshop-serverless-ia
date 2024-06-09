@@ -37,6 +37,7 @@ AWS workshop serverless IA: Build your serverless GenAI powered MVP with AWS
 
 ```js
 // Function that returns the adequate voice depending on the language
+// File src/handlers/textToSpeech.mjs
 const getVoiceId = language => {
   if (language == 'fr') return "Lea"
   if (language == 'nl') return "Laura"
@@ -46,6 +47,8 @@ const getVoiceId = language => {
   return "Joanna"
 }
 ```
+
+### Deploy the backend
 
 ```bash
 sam build
@@ -85,6 +88,9 @@ fetch('https://shzln4d5ra.execute-api.us-west-2.amazonaws.com/Prod/', {
     body: JSON.stringify(payload),
 })
 ```
+
+### The web will look like this
+
 ![image](docs/1.png)
 
 # References
