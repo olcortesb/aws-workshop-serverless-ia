@@ -1,5 +1,6 @@
 # aws-workshop-serverless-ia
 AWS workshop serverless IA: Build your serverless GenAI powered MVP with AWS
+
 ![image](docs/0.png)
 
 
@@ -8,6 +9,10 @@ AWS workshop serverless IA: Build your serverless GenAI powered MVP with AWS
 - AWS Account
 - Configure AWS cli [Link](https://gist.github.com/olcortesb/a471797eb1d45c54ad51d920b78aa664)
 - Install AWS Sam [Link](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+
+- Request access to the model `jurasic-2Mid`
+
+![image](docs/4.png)
 
 # Architecture
 
@@ -28,13 +33,26 @@ AWS workshop serverless IA: Build your serverless GenAI powered MVP with AWS
 - Deploy the backend with `aws sam`.
 - The infrastructure definition is in `template.yaml` file
 
+> Add Spanish language 
+
+```js
+// Function that returns the adequate voice depending on the language
+const getVoiceId = language => {
+  if (language == 'fr') return "Lea"
+  if (language == 'nl') return "Laura"
+  if (language == 'ar') return "Hala"
+  if (language == 'it') return "Bianca"
+  if (language == 'es') return "Lucia"
+  return "Joanna"
+}
+```
 
 ```bash
 sam build
 sam deploy
 ```
 
-## Test the backen:
+## Test the backend:
 
 ```bash
   curl --location 'YOUR_API_GATEWAY_ENDPOINT' \
@@ -56,9 +74,18 @@ Deploy Frontend
 
 - Access to url enable by amplify for test the app in different languages
 
+> Add Spanish language support
+
+```js
+fetch('https://shzln4d5ra.execute-api.us-west-2.amazonaws.com/Prod/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+})
+```
 ![image](docs/1.png)
-
-
 
 # References
 - Repository build in base to WorkShop post summit: [Link](https://aws-experience.com/emea/iberia/e/e9354/post-aws-summit-madrid-workshops---serverless-track)
