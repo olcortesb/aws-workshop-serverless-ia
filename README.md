@@ -73,12 +73,6 @@ Deploy Frontend
 
 - Change the api gateway endpoint
 
-- Upload zip folder to  aws Amplify
-
-- Access to url enable by amplify for test the app in different languages
-
-> Add Spanish language support
-
 ```js
 fetch('https://shzln4d5ra.execute-api.us-west-2.amazonaws.com/Prod/', {
     method: 'POST',
@@ -87,6 +81,21 @@ fetch('https://shzln4d5ra.execute-api.us-west-2.amazonaws.com/Prod/', {
     },
     body: JSON.stringify(payload),
 })
+```
+- Upload zip folder to  aws Amplify
+
+- Access to url enable by amplify for test the app in different languages
+
+> Add Spanish language support
+
+```html
+<div>
+    <input type="radio" name="language" value="en" checked> English
+    <input type="radio" name="language" value="fr"> French
+    <input type="radio" name="language" value="ar"> Arabic
+    <input type="radio" name="language" value="nl"> Dutch
+    <input type="radio" name="language" value="es"> Spanish
+</div>
 ```
 
 ### The web will look like this
