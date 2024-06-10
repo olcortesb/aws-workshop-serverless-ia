@@ -29,8 +29,6 @@ image_repositories = []
 
 ```
 
-
-
 # Architecture
 
 ![image](docs/3.png)
@@ -118,6 +116,12 @@ fetch('YOUR_API_GATEWAY_ENDPOINT', {
 ### The web will look like this
 
 ![image](docs/1.png)
+
+
+# Delete Stack
+
+1. Remove files from S3 bucket
+2. Run `sam destroy`
 
 # References
 - Repository build in base to WorkShop post summit: [Link](https://aws-experience.com/emea/iberia/e/e9354/post-aws-summit-madrid-workshops---serverless-track)
