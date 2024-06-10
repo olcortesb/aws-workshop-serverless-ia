@@ -10,9 +10,26 @@ AWS workshop serverless IA: Build your serverless GenAI powered MVP with AWS
 - Configure AWS cli [Link](https://gist.github.com/olcortesb/a471797eb1d45c54ad51d920b78aa664)
 - Install AWS Sam [Link](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
 
-- Request access to the model `jurasic-2Mid`
+- ⚠️ Request access to the model `jurasic-2Mid` in a region of preference
 
 ![image](docs/4.png)
+
+- ⚠️ Change the default region in this file(`samconfig.toml`) , the same region than requested access to `jurassic-2 Mid`
+
+```yml
+version = 0.1
+[default.deploy.parameters]
+stack_name = "mvp-stories-demo"
+resolve_s3 = true
+s3_prefix = "mvp-stories-demo"
+region = "us-west-2" # Your region
+confirm_changeset = true 
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+
+```
+
+
 
 # Architecture
 
