@@ -74,7 +74,7 @@ Deploy Frontend
 - Change the api gateway endpoint
 
 ```js
-fetch('https://shzln4d5ra.execute-api.us-west-2.amazonaws.com/Prod/', {
+fetch('YOUR_API_GATEWAY_ENDPOINT', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
